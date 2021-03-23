@@ -1,0 +1,4 @@
+include *.md
+include ForceSpectroscopyHelper/*
+exclude data/*
+exclude ForceSpectroscopyHelper\.setting
