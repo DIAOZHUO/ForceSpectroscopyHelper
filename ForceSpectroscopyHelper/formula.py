@@ -1,25 +1,31 @@
-import scipy.interpolate as interpolate
-import matplotlib.pyplot as plt
-from itertools import combinations
-from scipy.signal import savgol_filter
-
-from math import sqrt
 from ForceSpectroscopyHelper.structures import *
 
 
-def spline_smooth(x, y, s=1.0, k=3):
-    f = interpolate.UnivariateSpline(x, y, s=s, k=k)
-    return f(x)
 
 
-def average_smooth(y, box_pts):
-    box = np.ones(box_pts)/box_pts
-    y_smooth = np.convolve(y, box, mode='same')
-    return y_smooth
+
+def line_proline(map, xy_point_from, xy_point_to):
+    length = int(np.hypot(xy_point_to[0] - xy_point_from[0], xy_point_to[1] - xy_point_from[1]))
+    x, y = np.linspace(xy_point_from[0], xy_point_to[0], length), np.linspace(xy_point_from[1], xy_point_to[1], length)
+    return map[x.astype(np.int), y.astype(np.int)]
 
 
-def savitzky_golay_fliter(y, window_size=50, poly=3):
-    return savgol_filter(y, window_size, poly)
+
+
+def frequency_shift_to_normalized_frequency_shift(delta_f, param: measurement_param) -> np.ndarray:
+    """
+     Large amplitudes A0>>d
+    :param delta_f:
+    :param param:
+    :return:
+    """
+    return delta_f * param.k * (param.amp / 10) ** 1.5 / param.f0
+
+
+
+
+
+
 
 
 def integral(m, n, h, f):
@@ -128,73 +134,3 @@ def inflection_point_test(x, F, Amp, z0) -> list:
 
 
 
-def SmoothMap(data, N):
-        I = data.shape[0]
-        J = data.shape[1]
-        data = np.array(data)
-        ResultData = np.zeros((I,J))
-        for j in range(0, J):
-            for i in range(int((N - 1) / 2), int(I - (N - 1) / 2)):
-                ResultData[i][j] = 0
-                for m in range(int(i - (N - 1) / 2), int(i + (N - 1) / 2 + 1)):
-                    ResultData[i][j] += data[m][j]
-                ResultData[i][j] = ResultData[i][j] / N
-
-            for i in range(0, int((N - 1) / 2)):
-                ResultData[i][j] = 0
-                for m in range(0, int(i + (N - 1) / 2 + 1)):
-                    ResultData[i][j] += data[m][j]
-                ResultData[i][j] = ResultData[i][j] / ((N - 1) / 2 + i + 1)
-
-            for i in range(int(I - (N - 1) / 2), I):
-                ResultData[i][j] = 0
-                for m in range(int(i - (N - 1) / 2), I):
-                    ResultData[i][j] += data[m][j]
-                ResultData[i][j] = ResultData[i][j] / ((N - 1) / 2 + I - i)
-        return ResultData
-
-
-def FFTMap(data, lowPass, x):
-        I = data.shape[0]
-        J = data.shape[1]
-        data = np.array(data)
-        window = np.flipud(np.hamming(I))
-        ResultData = np.zeros((I, J))
-        for j in range(0, J):
-            fft = np.fft.rfft(data[:, j] * window)
-            fft[lowPass:] = 0
-            y = np.fft.irfft(fft) / window
-            ResultData[:, j] = y
-            # if j == 44:
-            #     plt.plot(np.linspace(0, 513, 513), fft)
-            #     plt.show()
-            #     plt.plot(x, data[:, j])
-            #     plt.plot(x, y)
-            #     plt.show()
-
-        # plt.imshow(data)
-        # plt.colorbar()
-        # plt.show()
-        # plt.imshow(ResultData)
-        # plt.colorbar()
-        # plt.show()
-        return ResultData
-
-
-def FFT2Map(data, lowPass):
-        I = data.shape[0]
-        J = data.shape[1]
-        data = np.array(data)
-        window = np.flipud(np.hamming(I) * np.hamming(J))
-        fft = np.fft.rfft2(data * window)
-        plt.imshow(fft)
-        plt.colorbar()
-        plt.show()
-
-        fft[lowPass:] = 0
-        im = np.fft.irfft2(fft) / window
-
-        plt.imshow(im)
-        plt.colorbar()
-        plt.show()
-        return im

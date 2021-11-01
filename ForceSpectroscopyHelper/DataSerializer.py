@@ -1,11 +1,12 @@
-import pickle
+import pickle, os
 import numpy as np
 
 
 class DataSerializer:
 
-    def __init__(self, path):
+    def __init__(self, path, custom_ext=".pkl"):
         self.path = path
+        self._ext = custom_ext
         self.header = None
         self.data_dict = {}
 
@@ -19,12 +20,16 @@ class DataSerializer:
     def save(self):
         if self.header_key not in self.data_dict:
             raise ValueError("Save file need a header, use set_header(type(dict)) function")
-
-        with open(self.path+".pkl", "wb") as f:
+        filename, file_extension = os.path.splitext(self.path)
+        with open(filename + self._ext, "wb") as f:
             pickle.dump(self.data_dict, f, pickle.HIGHEST_PROTOCOL)
+            print("save to", filename + self._ext)
 
     def load(self):
-        with open(self.path + ".pkl", "rb") as f:
+        filename, file_extension = os.path.splitext(self.path)
+        if file_extension != self._ext:
+            filename = self.path
+        with open(filename + self._ext, "rb") as f:
             self.data_dict = pickle.load(f)
             self.header = self.data_dict[self.header_key]
 

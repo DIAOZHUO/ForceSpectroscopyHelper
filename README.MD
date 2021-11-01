@@ -1,6 +1,12 @@
 ForceSpectroscopyHelper
 ===================================
 
+
+This a legacy project, new project is at [HERE](https://github.com/DIAOZHUO/SPMUtil)
+------
+new project: Performance up up!!!~ Bug die die!!!
+
+
 Introduction
 -------
 
@@ -22,6 +28,3 @@ this package runs in the environment of python 3.6:
 * `pip install ForceSpectroscopyHelper`
 
 
-Basic Usage
--------------
-* preparing...

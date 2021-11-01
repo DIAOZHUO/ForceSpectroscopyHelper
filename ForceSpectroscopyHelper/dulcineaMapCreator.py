@@ -1,6 +1,6 @@
 from ForceSpectroscopyHelper.formula import *
 import matplotlib.pyplot as plt
-
+import ForceSpectroscopyHelper as fsh
 
 class DulcineaMapCreator:
 
@@ -75,7 +75,7 @@ class DulcineaMapCreator:
                 DfS[i][j] = -DfS[i][j] / ((N - 1) / 2 + I - i)
         """
 
-        return -SmoothMap(Df, N) * Sen + c
+        return -fsh.filter_2d.SmoothMap(Df, N) * Sen + c
 
     def CalcFMap(self, data, param: measurement_param):
         I = data.shape[0]

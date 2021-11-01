@@ -7,7 +7,7 @@ with open(path.join(this_directory, 'README.md'), encoding="utf-8") as f:
 
 setuptools.setup(
     name="ForceSpectroscopyHelper",
-    version="0.1.4",
+    version="0.3.3",
     description="NC-AFM experiment data IO, DF/F convert, 3D visualization tool.",
     author="ZHUO DIAO",
     author_email="enzian0515@gmail.com",

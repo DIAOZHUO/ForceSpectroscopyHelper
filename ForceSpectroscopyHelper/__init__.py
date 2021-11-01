@@ -1,5 +1,7 @@
 from . import formula
 from . import structures
+from . import filter_1d
+from . import filter_2d
 import os
 
 def set_dir(root_directory_path, data_folder_path):
@@ -10,6 +12,7 @@ def set_dir(root_directory_path, data_folder_path):
 
 def delete_dir_setting():
     os.remove(os.path.dirname(__file__) + "/.setting")
+
 
 # default_project_path = str(Path(__file__).parent.parent).replace("\\", "/") + "/"
 if not os.path.exists(os.path.dirname(__file__) + "/.setting"):
@@ -32,6 +35,9 @@ if not os.path.exists(os.path.dirname(__file__) + "/.setting"):
         f.close()
         __root.destroy()
 
+    def __cancel_button():
+        __root.destroy()
+
     __folder_path1 = tkinter.StringVar()
     tkinter.Label(text="welcome to use fsh!!!", foreground="#00ff00").grid(row=0, column=1)
     tkinter.Label(text="1. please select project root directory").grid(row=1, column=1)
@@ -47,12 +53,21 @@ if not os.path.exists(os.path.dirname(__file__) + "/.setting"):
 
     __button3 = tkinter.Button(text="OK", command=__ok_button)
     __button3.grid(row=5, column=0)
+    __button3 = tkinter.Button(text="Cancel", command=__cancel_button)
+    __button3.grid(row=5, column=1)
     __root.mainloop()
 
-
-__setting = open(os.path.dirname(__file__) + "/.setting").readline().split(" ")
-default_project_path = __setting[0] + "/"
-default_data_path = __setting[1] + "/"
+if os.path.exists(os.path.dirname(__file__) + "/.setting"):
+    __setting = open(os.path.dirname(__file__) + "/.setting").readline().split(" ")
+    default_project_path = __setting[0] + "/"
+    default_data_path = __setting[1] + "/"
+else:
+    default_project_path = os.path.dirname(__file__)
+    print("Warning! 'default_project_path' not defined...")
+    print("--", "temporary set default_project_path=", os.path.dirname(__file__))
+    default_data_path = os.path.dirname(__file__)
+    print("Warning! 'default_data_path' not defined...")
+    print("--", "temporary set default_data_path=", os.path.dirname(__file__))
 
 
 from .converter import *

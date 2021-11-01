@@ -349,10 +349,10 @@ class GridAnalyzer(BaseAnalyzer):
         return self._topo_cache[fileName]
 
     def CalcFMap(self, fileName, param:fsh.formula.measurement_param):
-        cvt = PakConvertor(fileName, fsh.default_project_path, False)
+        cvt = fsh.PakConvertor(fileName, fsh.default_project_path, False)
 
         xy = self.get_xy_count(fileName)
-        header = PakConvertor.PakHeader(data_size=xy, data_count=self.get_data_count(fileName))
+        header = fsh.PakConvertor.PakHeader(data_size=xy, data_count=self.get_data_count(fileName))
         header.comment = "3D force map, Calculate by GridAnalyzer"
         cvt.set_header(header)
         for i in range(0, xy[0]):
@@ -487,9 +487,9 @@ class DulcineaAnalyzer(BaseAnalyzer):
                     short型で読み込んで単位はm voltage(mV)です。
                     short型の32767は10V に対応します。
 
-                    voltageから周波数シフトに変換するとき　72.24 Hz/V の換算をすればよい
+                    voltageから周波数シフトに変換するとき　72.24 Hz/V のPLLを使っています.
 
-                    20180906以前のマッピングデータは生のshort型で出力しているので
+                    20180906以前のマッピングデータはshort型で出力しているので
                     ㎐ に変換する時　/ 3.2767  * 72.24 / 1000　の倍数関係を利用する
 
             """
@@ -532,6 +532,7 @@ class DulcineaAnalyzer(BaseAnalyzer):
 
     def GetDfMap(self, fileName, N=1, saveFile=False):
         result = self.__SaveFile(fileName, False)
+        # print(result[2])
 
         def get_value(key: str):
             value = [x for x in result[2] if x.find(key) != -1]
@@ -540,7 +541,13 @@ class DulcineaAnalyzer(BaseAnalyzer):
             else:
                 return None
 
-        height_amp = float(get_value("YAmplitude").replace("\\xc5", "").replace("nm", "")) * 40.9 * 0.1
+        if "\\xc5" in get_value("YAmplitude"):
+            height_amp = float(get_value("YAmplitude").replace("\\xc5", "")) * 40.9 * 0.1
+        elif "nm" in get_value("YAmplitude"):
+            height_amp = float(get_value("YAmplitude").replace("nm", "")) * 40.9
+        else:
+            raise ValueError("Can not read YAmplitude unit in header")
+        print("height", height_amp)
         data = np.zeros(shape=(result[1].x, result[1].y))
         for it in result[0]:
             # data[it.x][it.y] = (it.z - minDepth) / (maxDepth - minDepth) * -1
@@ -549,24 +556,25 @@ class DulcineaAnalyzer(BaseAnalyzer):
         mapper = DulcineaMapCreator()
         mapper.N = N
         data = mapper.CalcDfsMap(data)
-
+        # plt.imshow(data)
+        # plt.colorbar()
+        # plt.show()
         index = np.zeros(shape=result[1].x)
         for i in range(0, result[1].x):
             index[i] = i / result[1].x * height_amp
 
         if saveFile:
             pd.DataFrame(data, index=index).to_csv(fsh.default_data_path + fileName + ".csv")
-            a = fsh.StandardConvertor(fileName=fileName + ".csv")
+            temp = fsh.StandardConvertor(fileName=fileName + ".csv")
 
             pak = fsh.PakConvertor(fileName, fsh.default_project_path, autoLoad=False)
-            header = fsh.PakConvertor.PakHeader(data_size=1024, data_count=1024)
             for i in range(1, 1025):
-                pak.add_data(i, fsh.structures.force_curve(a.get_x_data(i), a.get_y_data(i)))
+                pak.add_data(i, fsh.structures.force_curve(temp.get_x_data(i), temp.get_y_data(i)))
 
-            header = fsh.PakConvertor.PakHeader(data_size=1024, data_count=1024)
+            header = fsh.PakConvertor.PakHeader(data_size=result[1].x, data_count=result[1].y)
             pak.set_header(header)
             pak.save()
-            del pak, a
+            del pak, temp
             os.remove(fsh.default_data_path + fileName + ".csv")
 
         return data, index
@@ -615,8 +623,8 @@ class DulcineaAnalyzer(BaseAnalyzer):
         param.f0 = f0
         param.k = k
 
-        cvt = PakConvertor(saveFileName, autoLoad=False)
-        header = PakConvertor.PakHeader(data_size=result[1].x, data_count=result[1].y)
+        cvt = fsh.PakConvertor(saveFileName, autoLoad=False)
+        header = fsh.PakConvertor.PakHeader(data_size=result[1].x, data_count=result[1].y)
         header.f0 = f0
         header.amp = amp
         header.k = k
@@ -627,7 +635,7 @@ class DulcineaAnalyzer(BaseAnalyzer):
         for i in range(0, 1024):
                 y = map[:, i]
                 if useFilter:
-                    y = formula.savitzky_golay_fliter(y, filterWindowSize)
+                    y = formula.filter_1d.savitzky_golay_fliter(y, filterWindowSize)
 
                 if method == "sadar":
                     f = formula.CalcForceCurveMatrix(y, param)
@@ -662,11 +670,11 @@ class DulcineaAnalyzer(BaseAnalyzer):
 
         data = np.asarray(pd.read_csv(f_path).values)[:, 1:]
         if method == "ave":
-            F = formula.SmoothMap(data, method_param)
+            F = formula.filter_2d.SmoothMap(data, method_param)
         elif method == "fft":
-            F = formula.FFTMap(data, method_param, index)
+            F = formula.filter_2d.FFTMap(data, method_param, index)
         elif method == "fft2":
-            F = formula.FFT2Map(data, method_param)
+            F = formula.filter_2d.FFT2Map(data, method_param)
         else:
             print("SmoothFMap method error")
             return

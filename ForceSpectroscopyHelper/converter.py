@@ -113,7 +113,6 @@ class StandardConvertor(BaseConvertor):
 
 
 class PakConvertor(BaseConvertor):
-    header_key = "PakConvertorHeader"
 
     class PakHeader:
         def __init__(self, data_size, data_count):
@@ -145,7 +144,7 @@ class PakConvertor(BaseConvertor):
         return np.array(y)
 
     def set_header(self, header):
-        self.data.data_dict[self.header_key] = header
+        self.data.set_header(header)
 
     def add_data(self, key, data, overwrite=False):
         self.data.add_data(key, data, overwrite)
